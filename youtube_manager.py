@@ -1,5 +1,4 @@
 import json
-from pytube import YouTube, Playlist
 import os
 import yt_dlp
 from yt_dlp import YoutubeDL
@@ -54,18 +53,10 @@ def update_video(videos):
     index = int(input("Enter video number to update: "))
     if 1 <= index <= len(videos):
         url = input("Enter new YouTube video link: ")
-        try:
-            ydl_opts = {}
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                info = ydl.extract_info(url, download=False)  
-                name = info.get('title', 'Unknown Title')
-                duration = info.get('duration', 0)
-                formatted_duration = format_duration(duration)
-                videos[index - 1] = {'name': name, 'time': formatted_duration, 'url': url}
-                save_data_helper(videos)
-                print(f"Updated: {name} ({formatted_duration})")
-        except Exception as e:
-            print(f"Error: {e}")
+        name, duration = fetch_video_details(url)
+        videos[index - 1] = {'name': name, 'time': duration, 'url': url}
+        save_data_helper(videos)
+        print(f"Updated: {name} ({duration})")
     else:
         print("Invalid index selected")
 
@@ -79,8 +70,6 @@ def delete_video(videos):
     else:
         print("Invalid index selected")
 
-import yt_dlp
-
 def download_video(videos):
     list_all_videos(videos)
     index = int(input("Enter video number to download: "))
@@ -93,7 +82,7 @@ def download_video(videos):
                 'outtmpl': f'{output_path}%(title)s.%(ext)s',  
             }
             
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            with YoutubeDL(ydl_opts) as ydl:
                 ydl.download([url])
             
             print(f"Video downloaded from: {url}")
@@ -101,9 +90,6 @@ def download_video(videos):
             print(f"Error: {e}")
     else:
         print("Invalid index selected")
-
-
-import yt_dlp
 
 def process_playlist(videos):
     url = input("Enter YouTube playlist link: ")
@@ -114,7 +100,7 @@ def process_playlist(videos):
             'skip_download': True,  
         }
 
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        with YoutubeDL(ydl_opts) as ydl:
             playlist_info = ydl.extract_info(url, download=False)
 
         if 'entries' not in playlist_info:
@@ -138,6 +124,20 @@ def process_playlist(videos):
         print(f"Error: {e}")
 
 
+def video_description(videos):
+    choice = int(input("Enter video number for description: "))
+    url = videos[choice-1]['url']
+    try:
+        ydl_opts = {}
+        with YoutubeDL(ydl_opts) as ydl:
+            info_dict = ydl.extract_info(url, download=False)
+            title = info_dict.get('title', 'Unknown Title')
+            description = info_dict.get('description', 'This video has no description')
+            print(f'Description of video {title} is \n{description}')
+    except Exception as e:
+        print(f"Error fetching video details: {e}")
+
+
 def main():
     videos = load_data()
     if not os.path.exists("downloads/"):
@@ -151,7 +151,8 @@ def main():
         print('4. Delete video')
         print('5. Download video')
         print('6. Process playlist')
-        print('7. Exit')
+        print('7. Video description')
+        print('8. Exit')
         choice = input('Enter your choice: ')
 
         match choice:
@@ -161,7 +162,8 @@ def main():
             case '4': delete_video(videos)
             case '5': download_video(videos)
             case '6': process_playlist(videos)
-            case '7': break
+            case '7': video_description(videos)
+            case '8': break
             case _: print("Invalid choice!")
 
 if __name__ == "__main__":
