@@ -87,7 +87,7 @@ def download_video(videos):
     if 1 <= index <= len(videos):
         url = videos[index - 1]['url']
         try:
-            output_path = "D:\CODING/"
+            output_path = "downloads/"
             ydl_opts = {
                 'format': 'best',  
                 'outtmpl': f'{output_path}%(title)s.%(ext)s',  
